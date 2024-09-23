@@ -6,8 +6,9 @@ Through matching operational data to very similar degradation curves generated u
 
 ## Approach 
 
-![Pre-Training Technique](pre_training.png)
+![Pre-Training Technique](pictures/pre_training.png)
 
+![TFT](pictures/tft.png)
 ## Data
 
 So far ACCEPT has been trained on the following datasets, and will therefore yield good results for cells of similar size/chemistry:
