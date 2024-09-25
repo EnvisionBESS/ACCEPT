@@ -320,14 +320,7 @@ class TemporalFusionTransformer(BaseModelWithCovariates):
         self.pre_output_gate_norm = GateAddNorm(self.hparams.hidden_size, dropout=None, trainable_add=False)
 
         self.linear_final = nn.Linear(self.hparams.hidden_size , embed_size)
-
-        if self.n_targets > 1:  # if to run with multiple targets
-            self.output_layer = nn.ModuleList(
-                [nn.Linear(self.hparams.hidden_size, output_size) for output_size in self.hparams.output_size]
-            )
-        else:
-            self.output_layer = nn.Linear(self.hparams.hidden_size, self.hparams.output_size)
-
+        
     @classmethod
     def from_dataset(
         cls,
