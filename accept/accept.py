@@ -1,6 +1,7 @@
 from typing import Dict
 
 import numpy as np
+import pandas as pd
 import torch
 from torch import nn
 
@@ -8,14 +9,11 @@ from pytorch_forecasting.data import TimeSeriesDataSet
 
 from .embeddings import TemporalFusionTransformer, TimeSeriesTransformer
 
-
 class ACCEPT(nn.Module):
     def __init__(self,
                  embed_dim: int,
                  training_operational: TimeSeriesDataSet,
-                 hidden_size: int = 24,
-                 input_size: int = 2400,
-                 queue_size = 128
+                 queue_size: int = 24
                  ):
         super().__init__()
 
@@ -51,31 +49,18 @@ class ACCEPT(nn.Module):
 
     def _initialize_physical_queue(self, queue_size):
         self.queue_size = queue_size
-        self.register_buffer("physical_queue", torch.randn(2400, self.queue_size))
-        self.phsyical_queue = nn.functional.normalize(self.physical_queue, dim=0)
-        self.register_buffer("physical_queue_ptr", torch.zeros(1, dtype=torch.long))
+        df = pd.read_csv('samples/negatives.csv', index_col = 0)
+        self.register_buffer("physical_queue", torch.Tensor(df.values))
+        self.physical_queue = self.physical_queue.unsqueeze(2) # make 3d
 
-    @torch.no_grad()
-    def dequeue_and_enqueue(self, physical):
-        """ Update Physical queue
-
-        Args:
-            physical (torch.Tensor): physical tensor of shaoe (batch_size, max_sequence_len)
-        """
-        physical_batch_size = physical.shape[0]
-        physical_ptr = int(self.physical_queue_ptr)
-
-        assert self.queue_size % physical_batch_size == 0, f"Queue size {self.queue_size} should be divisible by batch size {physical_batch_size}"
-
-        # Replace the physical from ptr to ptr+physical_batch_size (dequeue and enqueue)
-        self.physical_queue = self.physical_queue.unsqueeze(2) #need as 3 dimensional
-        self.physical_queue[:, physical_ptr:physical_ptr + physical_batch_size] = physical.permute(1, 0, 2)
-
-        physical_ptr = (physical_ptr + physical_batch_size) % self.queue_size  # move pointer
-        self.physical_queue_ptr[0] = physical_ptr
 
     def get_physical_queue(self):
-        return self.physical_queue.t()
+        # Randomly select queue_size indices for columns
+        random_indices = torch.randint(0, self.physical_queue.size(1), (self.queue_size,))
+        # Select the columns using the random indices
+        selected_curves = self.physical_queue[:, random_indices]
+
+        return selected_curves.permute(1,0,2)
 
     def encode_operational(self, x):
         return self.operational_encoding(x)
@@ -101,4 +86,3 @@ class ACCEPT(nn.Module):
 
         # shape = [global_batch_size, global_batch_size]
         return logits_per_operational, logits_per_physical
-    
