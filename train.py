@@ -97,7 +97,7 @@ if __name__ == '__main__':
     parser.add_argument("--time_varying_known_reals", type=str, nargs='+', help="List of time-varying known real-valued features.")
     parser.add_argument("--lower_cycle_idx", type=int, default=100, help="Lower cycle index for data filtering.")
     parser.add_argument("--upper_cycle_idx", type=int, default=500, help="Upper cycle index for data filtering.")
-    parser.add_argument("--embed_dim", type=int,  help="Embedding dimension size.")
+    parser.add_argument("--embed_dim", type=int, default=512,  help="Embedding dimension size.")
     parser.add_argument("--negative_path", type=str, help="Path for negative samples.")
     parser.add_argument("--hidden_size", type=int, default=24, help="Size of the hidden layer.")
     parser.add_argument("--hidden_cont_size", type=int, default=64, help="Size of the continuous hidden layer.")
