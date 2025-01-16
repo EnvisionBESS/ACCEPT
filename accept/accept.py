@@ -53,10 +53,10 @@ class ACCEPT(nn.Module):
 
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
 
-        self._initialize_physical_queue(queue_size)
+        self._initialize_simulated_queue(queue_size)
 
 
-    def _initialize_physical_queue(self, queue_size):
+    def _initialize_simulated_queue(self, queue_size):
         self.queue_size = queue_size
         df = pd.read_csv(self.negative_path, index_col = 0).reset_index()
         df = df[:PHYSICAL_SEQ_LEN]
@@ -65,9 +65,9 @@ class ACCEPT(nn.Module):
         self.physical_queue = self.physical_queue.unsqueeze(2) # make 3d
 
 
-    def get_physical_queue(self):
+    def get_simulated_queue(self):
         # Randomly select queue_size indices for columns
-        random_indices = torch.randint(0, self.physical_queue.size(1), (self.queue_size,))
+        random_indices = torch.randint(0, self.simulated_queue.size(1), (self.queue_size,))
         # Select the columns using the random indices
         selected_curves = self.physical_queue[:, random_indices]
 
@@ -81,19 +81,19 @@ class ACCEPT(nn.Module):
 
     def forward(self,
                 operational: Dict[str, Dict[str, torch.Tensor]],
-                physical: Dict[str, Dict[str, torch.Tensor]]):
+                simulated: Dict[str, Dict[str, torch.Tensor]]):
 
         operational_features = self.encode_operational(operational)
-        physical_features = self.encode_physical(physical)
+        simulated_features = self.encode_physical(simulated)
 
         # normalized features
         operational_features = operational_features / operational_features.norm(dim=1, keepdim=True)
-        physical_features = physical_features / physical_features.norm(dim=1, keepdim=True)
+        simulated_features = simulated_features / simulated_features.norm(dim=1, keepdim=True)
 
         # cosine similarity as logits
         logit_scale = self.logit_scale.exp()
-        logits_per_operational = logit_scale * operational_features @ physical_features.t()
-        logits_per_physical = logits_per_operational.t()
+        logits_per_operational = logit_scale * operational_features @ simulated_features.t()
+        logits_per_simulated = logits_per_operational.t()
 
         # shape = [global_batch_size, global_batch_size]
-        return logits_per_operational, logits_per_physical
+        return logits_per_operational, logits_per_simulated
