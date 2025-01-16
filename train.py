@@ -38,9 +38,8 @@ def train(train_dataloader,
           n_epochs):
 
     for epoch in range(n_epochs):
+        print(f'Starting epoch: {epoch}')
         bar = tqdm.tqdm(enumerate(train_dataloader), total=len(train_dataloader))
-        total_epoch_loss = 0
-
         for _ , operational in bar:
             # operational = Tuple[features, target]
             operational = operational[0] # just need the features rather than the target
@@ -49,15 +48,14 @@ def train(train_dataloader,
             groups = operational['groups']
             target_tensors_physical = torch.stack([simulated_matches[i] for i in groups[:,0]])
 
-            target_tensors_physical = target_tensors_physical.unsqueeze(2)
+            target_tensors_physical = target_tensors_physical.unsqueeze(2) # Ensure 3-d as required by model
             target_tensors_physical = target_tensors_physical.to(device)
 
+            # fetch additional negatives from queue and append
             simulated_queue = model.get_simulated_queue().to(device)
-
             physical_all = torch.cat([target_tensors_physical, simulated_queue], dim=0)
-            #model.dequeue_and_enqueue(target_tensors_physical)
+
             optimizer.zero_grad()
-            #targets_physical = torch.arange(batch_size, dtype=torch.long, device='cpu')
 
             # Forward pass
             logits_operational, _ = model(operational, physical_all)
@@ -86,6 +84,7 @@ if __name__ == '__main__':
 
     # Adding arguments
     parser.add_argument("--path", type=str, required=True, help="Path to the data file.")
+    parser.add_argument("--matches_path", type=str, required=True, help="Path to positive matches of curves")
     parser.add_argument("--time_idx", type=str, required=True, help="Index column for time.")
     parser.add_argument("--target", type=str, required=True, help="Target column for prediction.")
     parser.add_argument("--groups", type=str, nargs='+', required=True, help="List of group identifiers.")
@@ -95,6 +94,18 @@ if __name__ == '__main__':
     parser.add_argument("--time_varying_known_reals", type=str, nargs='+', required=True, help="List of time-varying known real-valued features.")
     parser.add_argument("--lower_cycle_idx", type=int, default=100, help="Lower cycle index for data filtering.")
     parser.add_argument("--upper_cycle_idx", type=int, default=500, help="Upper cycle index for data filtering.")
+    parser.add_argument("--embed_dim", type=int, required=True, help="Embedding dimension size.")
+    parser.add_argument("--negative_path", type=str, required=True, help="Path for negative samples.")
+    parser.add_argument("--hidden_size", type=int, default=24, help="Size of the hidden layer.")
+    parser.add_argument("--hidden_cont_size", type=int, default=64, help="Size of the continuous hidden layer.")
+    parser.add_argument("--queue_size", type=int, default=1024, help="Size of the queue.")
+    parser.add_argument("--hidden_size_conv", type=int, default=256, help="Size of the convolutional hidden layer.")
+    parser.add_argument("--kernel_size", type=int, default=22, help="Kernel size for convolutions.")
+    parser.add_argument("--attention_head_size", type=int, default=4, help="Size of the attention head.")
+    parser.add_argument("--dropout", type=float, default=0.1, help="Dropout rate.")
+    parser.add_argument("--temperature", type=float, default=0.07, help="Temperature parameter for softmax.")
+    parser.add_argument("--lr", type=float, default=0.0001, help="Leaning rate")
+    parser.add_argument("--n_epochs", type=int, default=100, help="Number of epochs")
 
     # Parse arguments
     args = parser.parse_args()
@@ -113,11 +124,20 @@ if __name__ == '__main__':
         upper_cycle_idx=args.upper_cycle_idx
     )
 
+    simulated_matches = pd.read_csv(args.matches_path)
 
-    simualated_matches = pd.read_csv(matches_path)
+    model = ACCEPT(embed_dim=args.embed_dim, negative_path=args.negative_path, training_operational=None,
+                   hidden_size=args.hidden_size, hidden_cont_size=args.hidden_cont_size,
+                   queue_size=args.queue_size, hidden_size_conv=args.hidden_size_conv,
+                   kernel_size=args.kernel_size, attention_head_size=args.attention_head_size,
+                   dropout=args.dropout, temperature=args.temperature)
+    
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-
-
-    model = ACCEPT()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    train()
+    train(
+        train_dataloader,
+        optimizer,
+        simulated_matches,
+        args.device,
+        args.n_epochs
+    )
