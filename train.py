@@ -3,6 +3,7 @@ import argparse
 import tqdm
 
 import torch
+import torch.nn.functional as F
 
 from .data import load_data
 from accept import ACCEPT
