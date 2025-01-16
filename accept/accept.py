@@ -1,41 +1,50 @@
 from typing import Dict
-
+import os
 import numpy as np
 import pandas as pd
+
 import torch
 from torch import nn
-
 from pytorch_forecasting.data import TimeSeriesDataSet
 
-from .embeddings import TemporalFusionTransformer, TimeSeriesTransformer
+from .embeddings import TemporalFusionTransformer, ConvModule
+
+PHYSICAL_SEQ_LEN = os.get_env('PHYSICAL_SEQ_LEN')
 
 class ACCEPT(nn.Module):
     def __init__(self,
                  embed_dim: int,
+                 negative_path: str,
                  training_operational: TimeSeriesDataSet,
-                 queue_size: int = 24
+                 hidden_size: int = 24,
+                 hidden_cont_size: int = 64,
+                 queue_size: int = 1024,
+                 hidden_size_conv: int = 256,
+                 kernel_size: int = 22,
+                 attention_head_size: int = 4,
+                 dropout: float = 0.1,
+                 temperature: float = 0.07
                  ):
         super().__init__()
-
-        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+        self.temperature = temperature
+        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / self.temperature))
+        self.negative_path = negative_path
 
         self.operational_encoding = TemporalFusionTransformer.from_dataset(
                 training_operational,
-                hidden_size=24,
-                attention_head_size=4,
-                dropout=0.15,
-                hidden_continuous_size=20,  # set to <= hidden_size
+                hidden_size=hidden_size,
+                attention_head_size=attention_head_size,
+                dropout=dropout,
+                hidden_continuous_size=hidden_cont_size,  # set to <= hidden_size
                 embed_size = embed_dim
             )
 
-        self.physical_encoding = TimeSeriesTransformer(
-            input_size = 1,
-            d_model = embed_dim,
-            nhead = 4,
-            num_layers = 2,
-            dim_feedforward = 32,
-            dropout = 0.1
-        )
+        self.physical_encoding = ConvModule(
+            1,
+            hidden_size_conv,
+            kernel_size,
+            embed_dim,)
+
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -49,7 +58,9 @@ class ACCEPT(nn.Module):
 
     def _initialize_physical_queue(self, queue_size):
         self.queue_size = queue_size
-        df = pd.read_csv('samples/negatives.csv', index_col = 0)
+        df = pd.read_csv(self.negative_path, index_col = 0).reset_index()
+        df = df[:PHYSICAL_SEQ_LEN]
+        df = df*100
         self.register_buffer("physical_queue", torch.Tensor(df.values))
         self.physical_queue = self.physical_queue.unsqueeze(2) # make 3d
 

@@ -5,7 +5,7 @@ setup(
     py_modules=["accept"],
     version="1.0",
     description="",
-    author="EnvisionEnergy",
+    author="",
     packages=find_packages(exclude=["tests*"]),
     install_requires=[],
     include_package_data=True,

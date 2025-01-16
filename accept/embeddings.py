@@ -607,3 +607,52 @@ class TimeSeriesTransformer(nn.Module):
         emb = self.activation(emb)
 
         return emb
+    
+
+class ConvModule(nn.Module):
+    def __init__(self, n_features, dout, kernel_size, d_model, act_fn: str = 'relu', dropout: float = 0.1):
+        super(ConvModule, self).__init__()
+        # Convolutional layers setup
+        self.conv1 = nn.Conv1d(n_features, dout, kernel_size)
+        self.pool1 = nn.AvgPool1d(kernel_size)
+        self.conv2 = nn.Conv1d(dout, dout, kernel_size)
+        self.pool2 = nn.AvgPool1d(kernel_size)
+        self.conv3 = nn.Conv1d(dout, dout, kernel_size)  # Adding the third convolutional layer
+        self.pool3 = nn.AvgPool1d(kernel_size)  # Adding pooling layer for the third convolution
+
+        self.conv4 = nn.Conv1d(dout, dout, kernel_size)  # Adding the third convolutional layer
+        self.pool4 = nn.AvgPool1d(kernel_size)  # Adding pooling layer for the third convolution
+
+        # Activation and Dropout
+        self.act_fn = getattr(F, act_fn)
+        self.dropout = nn.Dropout(dropout)
+
+        # Adaptive pooling and final linear layer to produce the output in desired dimension
+        self.adaptive_pool = nn.AdaptiveAvgPool1d(1)
+        self.final = nn.Linear(dout, d_model)
+
+    def forward(self, x):
+        # x expected to be of shape [batch_size, sequence_length, n_features]
+        x = x.permute(0, 2, 1)  # Rearrange dimensions to [batch_size, n_features, sequence_length]
+
+        # Convolutional and pooling layers
+        x = self.conv1(x)
+        x = self.act_fn(x)
+        x = self.pool1(x)
+        x = self.conv2(x)
+        x = self.act_fn(x)
+        x = self.pool2(x)
+        x = self.conv3(x)
+        x = self.act_fn(x)
+        x = self.pool3(x)
+        x = self.conv4(x)
+        x = self.act_fn(x)
+        x = self.pool4(x)
+        x = self.dropout(x)
+
+        # Adaptive pooling and final transformation
+        x = self.adaptive_pool(x)  # Reduce to one time-step per feature map
+        x = torch.flatten(x, start_dim=1)  # Flatten the outputs to [batch_size, dout]
+        x = self.final(x)  # [batch_size, d_model]
+
+        return x
