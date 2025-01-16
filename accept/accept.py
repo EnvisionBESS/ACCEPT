@@ -16,14 +16,14 @@ class ACCEPT(nn.Module):
                  embed_dim: int,
                  negative_path: str,
                  training_operational: TimeSeriesDataSet,
-                 hidden_size: int = 24,
-                 hidden_cont_size: int = 64,
-                 queue_size: int = 1024,
-                 hidden_size_conv: int = 256,
-                 kernel_size: int = 22,
-                 attention_head_size: int = 4,
-                 dropout: float = 0.1,
-                 temperature: float = 0.07
+                 hidden_size: int,
+                 hidden_cont_size: int,
+                 queue_size: int,
+                 hidden_size_conv: int,
+                 kernel_size: int,
+                 attention_head_size: int,
+                 dropout: float,
+                 temperature: float
                  ):
         super().__init__()
         self.temperature = temperature

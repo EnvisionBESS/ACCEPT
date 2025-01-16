@@ -135,8 +135,8 @@ def load_data(path: str,
               static_reals: List[str], 
               time_varying_unknown_reals: List[str],
               time_varying_known_reals: List[str],
-              lower_cycle_idx: int = 100,
-              upper_cycle_idx: int = 500,
+              lower_cycle_idx: int,
+              upper_cycle_idx: int,
               ) -> DataLoader:
 
     train_df = pd.read_csv(path)
@@ -147,7 +147,7 @@ def load_data(path: str,
 
         min_encoder_length = i - 1
         max_encoder_length = i - 1
-        min_prediction_length = 1
+        min_prediction_length = 1 # Dont need preds directly from operational embedding model so set to 1
         max_prediction_length = 1
 
         training_op = TimeSeriesDataSet(
