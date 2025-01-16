@@ -46,6 +46,7 @@ def train(model,
             # operational = Tuple[features, target]
             operational = operational[0] # just need the features rather than the target
             operational = {k: v.to(device) for k, v in operational.items()}
+            
             # Fetch curves
             groups = operational['groups']
             target_tensors_physical = torch.stack([simulated_matches[i] for i in groups[:,0]])
@@ -81,7 +82,6 @@ def train(model,
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(description="Load data with specific parameters.")
 
     # Adding arguments
