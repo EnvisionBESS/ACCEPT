@@ -14,12 +14,12 @@ def info_nce_loss_from_logits(logits, scale = 0.1):
 
     Args:
         logits: Tensor of shape [batch_size, batch_size]
-        scale: Scalarparameter
+        scale: Scalar parameter
 
     Returns:
         loss: Scalar tensor representing the loss
     """
-    # Apply temperature scaling
+    # Apply scaling
     logits = logits / scale
 
     # Labels: correct indices
@@ -34,12 +34,10 @@ def info_nce_loss_from_logits(logits, scale = 0.1):
 def train(train_dataloader,
           optimizer,
           simulated_matches,
-          device):
+          device,
+          n_epochs):
 
-
-    number_of_epochs = 8
-    model.train()
-    for epoch in range(number_of_epochs):
+    for epoch in range(n_epochs):
         bar = tqdm.tqdm(enumerate(train_dataloader), total=len(train_dataloader))
         total_epoch_loss = 0
 
