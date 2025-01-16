@@ -133,12 +133,15 @@ def load_data(path: str,
               static_categoricals: List[str], 
               static_reals: List[str], 
               time_varying_unknown_reals: List[str],
-              time_varying_known_reals: List[str]) -> DataLoader:
+              time_varying_known_reals: List[str],
+              lower_cycle_idx: int = 100,
+              upper_cycle_idx: int = 500,
+              ) -> DataLoader:
 
     train_df = pd.read_csv(path)
     # Only want data starting at cycle 1
     training_op_total = None
-    for i in range(100, 500):
+    for i in range(lower_cycle_idx, upper_cycle_idx):
         tmp = train_df[train_df['Cycle'] <= i]
 
         min_encoder_length = i - 1
