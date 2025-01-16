@@ -32,7 +32,8 @@ def info_nce_loss_from_logits(logits, scale = 0.1):
 
     return loss
 
-def train(train_dataloader,
+def train(model,
+          train_dataloader,
           optimizer,
           simulated_matches,
           device,
@@ -84,19 +85,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Load data with specific parameters.")
 
     # Adding arguments
-    parser.add_argument("--path", type=str, required=True, help="Path to the data file.")
-    parser.add_argument("--matches_path", type=str, required=True, help="Path to positive matches of curves")
-    parser.add_argument("--time_idx", type=str, required=True, help="Index column for time.")
-    parser.add_argument("--target", type=str, required=True, help="Target column for prediction.")
-    parser.add_argument("--groups", type=str, nargs='+', required=True, help="List of group identifiers.")
-    parser.add_argument("--static_categoricals", type=str, nargs='+', required=True, help="List of static categorical features.")
-    parser.add_argument("--static_reals", type=str, nargs='+', required=True, help="List of static real-valued features.")
-    parser.add_argument("--time_varying_unknown_reals", type=str, nargs='+', required=True, help="List of time-varying unknown real-valued features.")
-    parser.add_argument("--time_varying_known_reals", type=str, nargs='+', required=True, help="List of time-varying known real-valued features.")
+    parser.add_argument("--path", type=str, help="Path to the data file.")
+    parser.add_argument("--matches_path", type=str, help="Path to positive matches of curves")
+    parser.add_argument("--time_idx", type=str, help="Index column for time.")
+    parser.add_argument("--target", type=str, help="Target column for prediction.")
+    parser.add_argument("--groups", type=str, nargs='+', help="List of group identifiers.")
+    parser.add_argument("--static_categoricals", type=str, nargs='+', help="List of static categorical features.")
+    parser.add_argument("--static_reals", type=str, nargs='+', help="List of static real-valued features.")
+    parser.add_argument("--time_varying_unknown_reals", type=str, nargs='+', help="List of time-varying unknown real-valued features.")
+    parser.add_argument("--time_varying_known_reals", type=str, nargs='+', help="List of time-varying known real-valued features.")
     parser.add_argument("--lower_cycle_idx", type=int, default=100, help="Lower cycle index for data filtering.")
     parser.add_argument("--upper_cycle_idx", type=int, default=500, help="Upper cycle index for data filtering.")
-    parser.add_argument("--embed_dim", type=int, required=True, help="Embedding dimension size.")
-    parser.add_argument("--negative_path", type=str, required=True, help="Path for negative samples.")
+    parser.add_argument("--embed_dim", type=int,  help="Embedding dimension size.")
+    parser.add_argument("--negative_path", type=str, help="Path for negative samples.")
     parser.add_argument("--hidden_size", type=int, default=24, help="Size of the hidden layer.")
     parser.add_argument("--hidden_cont_size", type=int, default=64, help="Size of the continuous hidden layer.")
     parser.add_argument("--queue_size", type=int, default=1024, help="Size of the queue.")
@@ -107,6 +108,8 @@ if __name__ == '__main__':
     parser.add_argument("--temperature", type=float, default=0.07, help="Temperature parameter for softmax.")
     parser.add_argument("--lr", type=float, default=0.0001, help="Leaning rate")
     parser.add_argument("--n_epochs", type=int, default=100, help="Number of epochs")
+    parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
+
 
     # Parse arguments
     args = parser.parse_args()
@@ -114,6 +117,7 @@ if __name__ == '__main__':
     # Call the function with parsed arguments
     train_dataloader = load_data(
         path=args.path, 
+        batch_size=args.batch_size,
         time_idx=args.time_idx, 
         target=args.target, 
         groups=args.groups, 
@@ -136,9 +140,10 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     train(
+        model,
         train_dataloader,
         optimizer,
         simulated_matches,
         args.device,
-        args.n_epochs
+        args.n_epochs,
     )

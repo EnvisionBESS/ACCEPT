@@ -126,7 +126,8 @@ def collate_fn(
         )
 
 
-def load_data(path: str, 
+def load_data(path: str,
+              batch_size: int, 
               time_idx: str, 
               target: str,
               groups: List[str], 
@@ -174,6 +175,6 @@ def load_data(path: str,
         else:
             training_op_total = torch.utils.data.ConcatDataset([training_op_total, training_op])
 
-    train_dataloader = DataLoader(training_op_total, collate_fn=collate_fn, batch_size=64)
+    train_dataloader = DataLoader(training_op_total, collate_fn=collate_fn, batch_size=batch_size)
 
     return train_dataloader
