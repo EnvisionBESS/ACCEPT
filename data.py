@@ -128,7 +128,7 @@ def collate_fn(
 
 def load_data(path: str,
               batch_size: int, 
-              time_idx: str, 
+              cycle_idx: str, 
               target: str,
               groups: List[str], 
               static_categoricals: List[str], 
@@ -143,7 +143,7 @@ def load_data(path: str,
     # Only want data starting at cycle 1
     training_op_total = None
     for i in range(lower_cycle_idx, upper_cycle_idx):
-        tmp = train_df[train_df['Cycle'] <= i]
+        tmp = train_df[train_df[cycle_idx] <= i]
 
         min_encoder_length = i - 1
         max_encoder_length = i - 1
@@ -152,7 +152,7 @@ def load_data(path: str,
 
         training_op = TimeSeriesDataSet(
             tmp,
-            time_idx=time_idx,
+            time_idx=cycle_idx,
             target=target,
             group_ids=groups,
             static_categoricals = static_categoricals,

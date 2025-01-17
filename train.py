@@ -88,7 +88,7 @@ if __name__ == '__main__':
     parser.add_argument("--path", type=str, help="Path to the data file.")
     parser.add_argument("--matches_path", type=str, help="Path to positive matches of curves")
     parser.add_argument("--device", type=str, default="cpu", help="deice type")
-    parser.add_argument("--time_idx", type=str, help="Index column for time.")
+    parser.add_argument("--cycle_idx", type=str, help="Index column for time.")
     parser.add_argument("--target", type=str, help="Target column for prediction.")
     parser.add_argument("--groups", type=str, nargs='+', help="List of group identifiers.")
     parser.add_argument("--static_categoricals", type=str, nargs='+', help="List of static categorical features.")
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     train_dataloader = load_data(
         path=args.path, 
         batch_size=args.batch_size,
-        time_idx=args.time_idx, 
+        cycle_idx=args.cycle_idx, 
         target=args.target, 
         groups=args.groups, 
         static_categoricals=args.static_categoricals, 
