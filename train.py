@@ -9,7 +9,7 @@ from .data import load_data
 from accept import ACCEPT
 
 
-def info_nce_loss_from_logits(logits, scale = 0.1):
+def info_nce_loss_from_logits(logits):
     """
     Compute the InfoNCE loss given logits.
 
@@ -20,9 +20,6 @@ def info_nce_loss_from_logits(logits, scale = 0.1):
     Returns:
         loss: Scalar tensor representing the loss
     """
-    # Apply scaling
-    logits = logits / scale
-
     # Labels: correct indices
     batch_size = logits.size(0)
     labels = torch.arange(batch_size).long().to(logits.device)
